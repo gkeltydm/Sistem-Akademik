@@ -1,0 +1,57 @@
+<?php 
+
+class Transkrip_nilai extends CI_Controller{
+
+    public function index(){
+  
+    $nim = $this->session->userdata('nim');
+
+    $this->_rulesTranskrip();
+
+            $this->db->select('*');
+            $this->db->from('krs');
+            $this->db->where('nim', $nim);
+            $query = $this->db->get();
+            foreach($query->result() as $value){
+                cekNilai($value->nim,$value->kode_matakuliah,$value->nilai);
+            }
+
+            $this->db->select('t.kode_matakuliah,m.nama_matakuliah,m.sks,t.nilai');
+            $this->db->from('transkrip_nilai as t');
+            $this->db->where('nim', $nim);
+            $this->db->join('matakuliah as m','t.kode_matakuliah = m.kode_matakuliah', 'inner');
+
+            $transkrip = $this->db->get()->result();
+
+            $mhs=$this->db->select('nama_lengkap, nama_prodi')->from('mahasiswa')->where(array('nim' =>$nim))->get()->row();
+            $prodi=$this->db->select('nama_prodi')->from('prodi')->where(array('nama_prodi' =>$mhs->nama_prodi))->get()->row()->nama_prodi;
+            
+            $data = array(
+                'transkrip' => $transkrip,
+                'nim' => $nim,
+                'nama' => $mhs->nama_lengkap,
+                'prodi' => $prodi
+
+            );
+
+            $this->load->model('mahasiswa_model');
+            
+            // Dapatkan data mahasiswa berdasarkan nim
+            $mahasiswa_data = $this->mahasiswa_model->getMahasiswaByNIM($nim);
+    
+            // Kirim data mahasiswa ke view
+            $data1['mahasiswa'] = $mahasiswa_data;
+            
+            $this->load->view('templates_users/header');
+            $this->load->view('templates_users/sidebar',$data1);
+    $this->load->view('users/data_transkrip', $data);
+    $this->load->view('templates_users/footer');
+
+
+    }
+    public function _rulesTranskrip(){
+        $this->form_validation->set_rules('nim', 'NIM', 'required',['required' =>'NIM wajib diisi']);
+    }
+}
+
+?>
